@@ -1193,6 +1193,8 @@ const tools: Tool[] = [
   { slug: "image-to-pdf",           name: "Image to PDF",            category: "image",   description: "Merge images into a single PDF document." },
   { slug: "watermark-tool",         name: "Watermark Tool",          category: "image",   description: "Add a custom watermark to your images." },
   { slug: "meme-creator",           name: "Meme Creator",            category: "image",   description: "Create viral memes with text overlays." },
+  { slug: "logo-generator",         name: "AI Logo Generator",       category: "image",   description: "Generate professional logo concepts with AI — colors, fonts, and brand identity in seconds.", isNew: true },
+  { slug: "ai-image-generator",     name: "AI Image Generator",      category: "image",   description: "Turn any text prompt into a stunning image — free, no account needed.", isNew: true },
   { slug: "background-remover",     name: "AI Background Remover",   category: "image",   description: "Remove image backgrounds with AI — 100% in your browser, nothing uploaded.", isNew: true },
   { slug: "blur-background",        name: "Blur Background",         category: "image",   description: "Blur image backgrounds for a professional portrait look." },
   { slug: "color-picker",           name: "Color Picker",            category: "image",   description: "Pick and copy exact color codes from any image." },
@@ -1451,7 +1453,7 @@ function Shell(){
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 function Header({menuOpen,setMenuOpen}:{menuOpen:boolean;setMenuOpen:(v:boolean)=>void}){
-  const{theme,setTheme,colorTheme,setColorTheme,lang,setLang,t,account,aiProvider,setAiProvider}=useSite();
+  const{theme,setTheme,colorTheme,setColorTheme,lang,setLang,t,account}=useSite();
   const nav=useNavigate();
   const loc=useLocation();
   const[q,setQ]=useState("");
@@ -1608,17 +1610,7 @@ function Header({menuOpen,setMenuOpen}:{menuOpen:boolean;setMenuOpen:(v:boolean)
                         </button>
                       </div>
                     </div>
-                    <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-1">
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400">AI Provider</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button type="button" onClick={()=>setAiProvider("anthropic")} className={cn("flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all",aiProvider==="anthropic"?"text-white":"border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300")} style={aiProvider==="anthropic"?{background:ct.color}:{}}>
-                          <Sparkles size={13}/> Claude
-                        </button>
-                        <button type="button" onClick={()=>setAiProvider("openai")} className={cn("flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all",aiProvider==="openai"?"text-white":"border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300")} style={aiProvider==="openai"?{background:ct.color}:{}}>
-                          <Zap size={13}/> GPT-4o
-                        </button>
-                      </div>
-                    </div>
+
                   </div>
                 </motion.div>
               </motion.div>
@@ -1842,13 +1834,10 @@ function ToolCard({tool}:{tool:Tool}){
   );
 }
 
-// ─── Removed tools: Logo Generator + AI Image Generator ─────────────────────
-// These tools were removed. If users land on /tools/logo-generator or
-// /tools/ai-image-generator, they'll see the standard "tool not found" page.
-//
+// ─── Special tool handlers ────────────────────────────────────────────────────
 // ─── Workbench ────────────────────────────────────────────────────────────────
 function Workbench({tool}:{tool:Tool}){
-  const{account,recordToolUse,saveProject,aiProvider}=useSite();
+  const{account,recordToolUse,saveProject,aiProvider,setAiProvider}=useSite();
   const[input,setInput]=useState("Creator growth, SEO, and launch-ready content");
   const[imageName,setImageName]=useState("");
   const[preview,setPreview]=useState<string|null>(null);
@@ -1902,7 +1891,7 @@ function Workbench({tool}:{tool:Tool}){
   if(tool.slug==="logo-generator"){
     return(
       <Suspense fallback={suspenseFallback("Logo Generator")}>
-        <LogoGeneratorTool aiProvider={aiProvider} tier={account.tier} recordUse={recordToolUse}/>
+        <LogoGeneratorTool aiProvider={aiProvider} setAiProvider={setAiProvider} tier={account.tier} recordUse={recordToolUse}/>
       </Suspense>
     );
   }
@@ -1910,7 +1899,7 @@ function Workbench({tool}:{tool:Tool}){
   if(tool.slug==="ai-image-generator"){
     return(
       <Suspense fallback={suspenseFallback("AI Image Generator")}>
-        <AIImageGeneratorTool aiProvider={aiProvider} recordUse={recordToolUse}/>
+        <AIImageGeneratorTool aiProvider={aiProvider} setAiProvider={setAiProvider} recordUse={recordToolUse}/>
       </Suspense>
     );
   }
