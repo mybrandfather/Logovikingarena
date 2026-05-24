@@ -1,0 +1,70 @@
+# https://logoviking.com/robots.txt
+# Last updated: 2026-05-15
+
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /settings
+Disallow: /api/
+
+# Googlebot (full access)
+User-agent: Googlebot
+Allow: /
+Disallow: /auth/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /settings
+
+# Googlebot-Image
+User-agent: Googlebot-Image
+Allow: /
+
+# Bing
+User-agent: Bingbot
+Allow: /
+Disallow: /auth/
+Disallow: /dashboard
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Yandex
+User-agent: Yandex
+Allow: /
+
+# AI training bots (blocked by default — uncomment to allow)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+# Crawl delay (Yandex / Bing honor this)
+Crawl-delay: 1
+
+# Sitemaps (Google reads all listed sitemaps)
+Sitemap: https://logoviking.com/sitemap-index.xml
+Sitemap: https://logoviking.com/sitemap-pages.xml
+Sitemap: https://logoviking.com/sitemap-tools.xml
+Sitemap: https://logoviking.com/sitemap-categories.xml
+Sitemap: https://logoviking.com/sitemap-blog.xml
+Sitemap: https://logoviking.com/sitemap-images.xml
+Sitemap: https://logoviking.com/sitemap.xml
+
+# Host (helps Yandex)
+Host: https://logoviking.com
