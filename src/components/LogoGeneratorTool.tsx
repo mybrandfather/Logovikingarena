@@ -55,161 +55,6 @@ function LogoCanvas({ concept, size = 200 }: { concept: LogoConcept; size?: numb
       ];
       const grd = ctx.createLinearGradient(0, 0, size, size);
       grd.addColorStop(0, match[0]);
-      grd.addColorStop(1, match[1] ?? match[0]);
-      ctx.fillStyle = grd;
-    } else {
-      ctx.fillStyle = concept.primaryColor;
-    }
-
-    const r = size * 0.12;
-    const cx = size / 2;
-    const cy = size / 2;
-    const rs = size * 0.42;
-
-    ctx.beginPath();
-
-    switch (concept.shape) {
-      case "circle":
-        ctx.arc(cx, cy, rs, 0, Math.PI * 2);
-        break;
-
-      case "hexagon":
-        for (let i = 0; i < 6; i++) {
-          const a = (Math.PI / 3) * i - Math.PI / 6;
-          const x = cx + rs * Math.cos(a);
-          const y = cy + rs * Math.sin(a);
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        break;
-
-      case "diamond":
-        ctx.moveTo(cx, cy - rs);
-        ctx.lineTo(cx + rs * 0.75, cy);
-        ctx.lineTo(cx, cy + rs);
-        ctx.lineTo(cx - rs * 0.75, cy);
-        ctx.closePath();
-        break;
-
-      case "shield":
-        ctx.moveTo(cx, cy - rs);
-        ctx.lineTo(cx + rs, cy - rs * 0.3);
-        ctx.lineTo(cx + rs, cy + rs * 0.2);
-        ctx.quadraticCurveTo(cx + rs, cy + rs, cx, cy + rs);
-        ctx.quadraticCurveTo(cx - rs, cy + rs, cx - rs, cy + rs * 0.2);
-        ctx.lineTo(cx - rs, cy - rs * 0.3);
-        ctx.closePath();
-        break;
-
-      default:
-        ctx.roundRect(cx - rs, cy - rs, rs * 2, rs * 2, r);
-    }
-
-    ctx.fill();
-
-    // Text
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `900 ${Math.round(size * 0.32)}px system-ui, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(0,0,0,0.18)";
-    ctx.shadowBlur = size * 0.04;
-    ctx.fillText(concept.initials, cx, cy + size * 0.02);
-    ctx.shadowBlur = 0;
-  }, [concept, size]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={size}
-      height={size}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: concept.shape === "circle" ? "50%" : "12px"
-      }}
-    />
-  );
-}
-
-function downloadLogo(concept: LogoConcept, exportSize: number) {
-  const canvas = document.createElement("canvas");
-  canvas.width = exportSize;
-  canvas.height = exportSize;
-
-  const ctx = canvas.getContext("2d")!;
-  const size = exportSize;
-
-  const cx = size / 2;
-  const cy = size / 2;
-  const rs = size * 0.42;
-  const r = size * 0.12;
-
-  if (concept.bg.startsWith("linear-gradient")) {
-    const match = concept.bg.match(/#[0-9a-fA-F]{3,6}/g) ?? [
-      concept.primaryColor,
-      concept.secondaryColor
-    ];
-    const grd = ctx.createLinearGradient(0, 0, size, size);
-    grd.addColorStop(0, match[0]);
-    grd.addColorStop(1, match[1] ?? match[0]);
-    ctx.fillStyle = grd;import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Download, RefreshCw, Sparkles, Check, Copy, ChevronDown } from "lucide-react";
-import { runLogoAI, type LogoConcept, type AIProvider } from "../ai";
-
-interface Props {
-  aiProvider: AIProvider;
-  setAiProvider: (p: AIProvider) => void;
-  tier: string;
-  recordUse: (slug: string, q: string) => { allowed: boolean };
-}
-
-const INDUSTRIES = [
-  "Creator / Content","Tech & SaaS","Fashion & Lifestyle","Food & Beverage","Health & Fitness",
-  "Education","Finance","Real Estate","Gaming","Music & Arts","Travel","E-commerce",
-  "Non-profit","Sports","Beauty"
-];
-
-const STYLES = [
-  "Modern","Minimalist","Bold","Playful","Luxury","Vintage","Futuristic",
-  "Handcrafted","Corporate","Retro"
-];
-
-const PLATFORMS = [
-  "YouTube","TikTok","Instagram","LinkedIn","Discord","Twitch",
-  "Twitter/X","Pinterest","Website / Universal","All Platforms"
-];
-
-const SIZES = [
-  { label:"Square (800×800)", w:800, h:800 },
-  { label:"YouTube banner (2560×1440)", w:2560, h:1440 },
-  { label:"TikTok profile (320×320)", w:320, h:320 },
-  { label:"LinkedIn (500×500)", w:500, h:500 },
-  { label:"Favicon (192×192)", w:192, h:192 }
-];
-
-function LogoCanvas({ concept, size = 200 }: { concept: LogoConcept; size?: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = size;
-    canvas.height = size;
-
-    // Background
-    if (concept.bg.startsWith("linear-gradient")) {
-      const match = concept.bg.match(/#[0-9a-fA-F]{3,6}/g) ?? [
-        concept.primaryColor,
-        concept.secondaryColor
-      ];
-      const grd = ctx.createLinearGradient(0, 0, size, size);
-      grd.addColorStop(0, match[0]);
       grd.addColorAddColorStop(1, match[1] ?? match[0]);
       ctx.fillStyle = grd;
     } else {
@@ -353,7 +198,79 @@ function downloadLogo(concept: LogoConcept, exportSize: number) {
 
   ctx.fill();
 
-  ctx.fillStyle =  const copyColors = () => {
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `900 ${Math.round(size * 0.32)}px system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "rgba(0,0,0,0.18)";
+  ctx.shadowBlur = size * 0.04;
+  ctx.fillText(concept.initials, cx, cy + size * 0.02);
+
+  const link = document.createElement("a");
+  link.download = `${concept.name.toLowerCase().replace(/\s+/g, "-")}-logo-${exportSize}px.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+export default function LogoGeneratorTool({
+  aiProvider,
+  setAiProvider,
+  tier,
+  recordUse
+}: Props) {
+  const [prompt, setPrompt] = useState("");
+  const [industry, setIndustry] = useState("Creator / Content");
+  const [style, setStyle] = useState("Modern");
+  const [platform, setPlatform] = useState("YouTube");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [concepts, setConcepts] = useState<LogoConcept[] | null>(null);
+
+  // FIXED: use index instead of concept.id
+  const [chosenIndex, setChosenIndex] = useState<number | null>(null);
+
+  const [copied, setCopied] = useState(false);
+  const [exportSize, setExportSize] = useState(800);
+  const [showSizes, setShowSizes] = useState(false);
+
+  const chosenConcept =
+    concepts && chosenIndex !== null ? concepts[chosenIndex] : null;
+
+  const run = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!prompt.trim()) {
+      setErr("Describe your brand or enter your channel/business name.");
+      return;
+    }
+
+    const u = recordUse("logo-generator", prompt);
+    if (!u.allowed) {
+      setErr("Daily limit reached. Upgrade to Pro for unlimited generations.");
+      return;
+    }
+
+    setErr("");
+    setLoading(true);
+    setConcepts(null);
+    setChosenIndex(null);
+
+    try {
+      const result = await runLogoAI(prompt, industry, style, platform, aiProvider);
+      setConcepts(result);
+      setChosenIndex(0);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "AI error";
+      setErr(
+        msg.includes("NO_KEY")
+          ? "Add VITE_ANTHROPIC_API_KEY or VITE_OPENAI_API_KEY to your Vercel environment variables."
+          : msg
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  const copyColors = () => {
     if (!chosenConcept) return;
 
     navigator.clipboard.writeText(
@@ -483,7 +400,67 @@ function downloadLogo(concept: LogoConcept, exportSize: number) {
             className="space-y-4"
           >
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Pick your favourite concept            {/* CHOSEN CONCEPT PANEL */}
+              Pick your favourite concept
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {concepts.map((c, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.08 }}
+                  onClick={() => setChosenIndex(i)}
+                  className={`cursor-pointer rounded-2xl border-2 bg-white p-5 transition-all dark:bg-gray-900 ${
+                    chosenIndex === i
+                      ? "border-violet-500 shadow-lg shadow-violet-500/10"
+                      : "border-gray-200 hover:border-violet-200 dark:border-gray-700"
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <LogoCanvas concept={c} size={80} />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-bold text-gray-900 dark:text-white truncate">
+                          {c.name}
+                        </p>
+
+                        {chosenIndex === i && (
+                          <span className="flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600">
+                            <Check size={11} className="text-white" />
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {c.tagline}
+                      </p>
+
+                      <p className="mt-1 text-xs font-medium text-violet-600 dark:text-violet-400">
+                        {c.style}
+                      </p>
+
+                      <div className="mt-2 flex gap-1.5">
+                        <span
+                          className="h-4 w-4 rounded-full border border-gray-200 dark:border-gray-700"
+                          style={{ background: c.primaryColor }}
+                        />
+                        <span
+                          className="h-4 w-4 rounded-full border border-gray-200 dark:border-gray-700"
+                          style={{ background: c.secondaryColor }}
+                        />
+                      </div>
+
+                      <p className="mt-2 text-xs text-gray-400 leading-relaxed">
+                        {c.rationale}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {/* CHOSEN CONCEPT PANEL */}
             {chosenConcept && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -606,14 +583,3 @@ function downloadLogo(concept: LogoConcept, exportSize: number) {
     </div>
   );
 }
-
-  } else {
-    ctx.fillStyle = concept.primaryColor;
-  }
-
-  ctx.beginPath();
-
-  switch (concept.shape) {
-    case "circle":
-      ctx.arc(cx, cy, rs, 0, Math.PI * 2);
-      break
