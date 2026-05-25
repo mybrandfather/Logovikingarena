@@ -11,34 +11,81 @@ interface Props {
 }
 
 const INDUSTRIES = ["Creator / Content","Tech & SaaS","Fashion & Lifestyle","Food & Beverage","Health & Fitness","Education","Finance","Real Estate","Gaming","Music & Arts","Travel","E-commerce","Non-profit","Sports","Beauty"];
-const STYLES = ["Modern","Minimalist","Bold","Playful","Luxury","Vintage","Futuristic","Handcrafted","Corporate","Retro"];
-const PLATFORMS = ["YouTube","TikTok","Instagram","LinkedIn","Discord","Twitch","Twitter/X","Pinterest","Website / Universal","All Platforms"];
-
+const STYLES     = ["Modern","Minimalist","Bold","Playful","Luxury","Vintage","Futuristic","Handcrafted","Corporate","Retro"];
+const PLATFORMS  = ["YouTube","TikTok","Instagram","LinkedIn","Discord","Twitch","Twitter/X","Pinterest","Website / Universal","All Platforms"];
 const EXPORT_SIZES = [
-  { label: "Square (1024×1024)",          w: 1024, h: 1024 },
-  { label: "Instagram profile (800×800)", w: 800,  h: 800  },
-  { label: "YouTube banner (2560×1440)",  w: 2560, h: 1440 },
-  { label: "TikTok profile (320×320)",    w: 320,  h: 320  },
-  { label: "Favicon (192×192)",           w: 192,  h: 192  },
+  { label:"Square (1024×1024)",          w:1024, h:1024 },
+  { label:"Instagram profile (800×800)", w:800,  h:800  },
+  { label:"YouTube banner (2560×1440)",  w:2560, h:1440 },
+  { label:"TikTok profile (320×320)",    w:320,  h:320  },
+  { label:"Favicon (192×192)",           w:192,  h:192  },
 ];
 
 interface LogoResult {
   concept: LogoConcept;
-  imageUrl: string;
-  loaded: boolean;
+  iconUrl: string;   // Flux image — icon only, no text
+  iconLoaded: boolean;
 }
 
-async function downloadFromUrl(url: string, filename: string) {
+// Composite: draw Flux icon + brand name + tagline onto a canvas and download
+async function downloadComposite(result: LogoResult, w: number, h: number) {
+  const { concept, iconUrl } = result;
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+
+  // White background
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+
+  // Draw icon in top 65% of canvas
+  const iconH = Math.round(h * 0.62);
+  const iconY = Math.round(h * 0.04);
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise<void>((res, rej) => {
+      img.onload = () => res();
+      img.onerror = () => rej();
+      img.src = iconUrl;
+    });
+    ctx.drawImage(img, Math.round((w - iconH) / 2), iconY, iconH, iconH);
   } catch {
-    window.open(url, "_blank");
+    // If image load fails, draw a colored circle placeholder
+    ctx.fillStyle = concept.primaryColor;
+    ctx.beginPath();
+    ctx.arc(w / 2, iconY + iconH / 2, iconH / 2, 0, Math.PI * 2);
+    ctx.fill();
   }
+
+  // Brand name
+  const nameSize = Math.round(h * 0.072);
+  ctx.fillStyle = "#0f172a";
+  ctx.font = `900 ${nameSize}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(concept.name, w / 2, iconY + iconH + nameSize * 0.9);
+
+  // Tagline
+  const tagSize = Math.round(h * 0.036);
+  ctx.font = `500 ${tagSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#64748b";
+  ctx.fillText(concept.tagline, w / 2, iconY + iconH + nameSize * 1.9);
+
+  // Color accent line
+  const lineY = iconY + iconH + nameSize * 2.7;
+  const lineW = Math.round(w * 0.15);
+  const grad = ctx.createLinearGradient(w / 2 - lineW, lineY, w / 2 + lineW, lineY);
+  grad.addColorStop(0, concept.primaryColor);
+  grad.addColorStop(1, concept.secondaryColor);
+  ctx.fillStyle = grad;
+  ctx.fillRect(w / 2 - lineW, lineY, lineW * 2, Math.max(2, Math.round(h * 0.005)));
+
+  const filename = `${concept.name.toLowerCase().replace(/\s+/g, "-")}-logo-${w}x${h}.png`;
+  const link = document.createElement("a");
+  link.download = filename;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
 }
 
 export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, recordUse }: Props) {
@@ -55,8 +102,8 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
   const [exportH, setExportH]     = useState(1024);
   const [showSizes, setShowSizes] = useState(false);
   const [regenerating, setRegenerating] = useState<0 | 1 | null>(null);
+  const [downloading, setDownloading]   = useState(false);
 
-  // Close sizes dropdown on outside click
   const sizesRef = useRef<HTMLDivElement>(null);
   const handleOutside = useCallback((e: MouseEvent) => {
     if (sizesRef.current && !sizesRef.current.contains(e.target as Node)) setShowSizes(false);
@@ -74,23 +121,22 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
     const u = recordUse("logo-generator", prompt);
     if (!u.allowed) { setErr("Daily limit reached. Upgrade to Pro for unlimited generations."); return; }
     setErr(""); setLoading(true); setResults(null);
-
     try {
-      // Step 1: Get brand concepts from AI (colors, tagline, shape, rationale)
+      // Step 1: AI designs the brand (colors, shape, tagline, rationale)
       const concepts = await runLogoAI(prompt, industry, style, platform, aiProvider);
       if (!Array.isArray(concepts) || concepts.length < 2) {
         setErr("AI returned an unexpected response. Check your API key has credits and try again."); return;
       }
 
-      // Step 2: Generate real logo images via Flux for both concepts (parallel)
-      const [urlA, urlB] = await Promise.all([
-        generateLogoImage(concepts[0].name, industry, style, concepts[0].primaryColor, concepts[0].secondaryColor, concepts[0].shape, concepts[0].tagline),
-        generateLogoImage(concepts[1].name, industry, style, concepts[1].primaryColor, concepts[1].secondaryColor, concepts[1].shape, concepts[1].tagline),
-      ]);
+      // Step 2: Generate icon images (NO text) via Flux — parallel
+      const [urlA, urlB] = [
+        generateLogoImage(industry, style, concepts[0].primaryColor, concepts[0].secondaryColor, concepts[0].shape),
+        generateLogoImage(industry, style, concepts[1].primaryColor, concepts[1].secondaryColor, concepts[1].shape),
+      ];
 
       setResults([
-        { concept: concepts[0], imageUrl: urlA, loaded: false },
-        { concept: concepts[1], imageUrl: urlB, loaded: false },
+        { concept: concepts[0], iconUrl: urlA, iconLoaded: false },
+        { concept: concepts[1], iconUrl: urlB, iconLoaded: false },
       ]);
       setChosen(0);
     } catch (e: unknown) {
@@ -101,28 +147,26 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
     } finally { setLoading(false); }
   };
 
-  // Regenerate just one logo image with a new seed
   const regenerateOne = async (idx: 0 | 1) => {
     if (!results) return;
     setRegenerating(idx);
-    try {
-      const c = results[idx].concept;
-      const newUrl = generateLogoImage(c.name, industry, style, c.primaryColor, c.secondaryColor, c.shape, c.tagline, Math.floor(Math.random() * 999999));
-      setResults(prev => {
-        if (!prev) return prev;
-        const updated = [...prev] as [LogoResult, LogoResult];
-        updated[idx] = { ...updated[idx], imageUrl: newUrl, loaded: false };
-        return updated;
-      });
-    } finally { setRegenerating(null); }
+    const c = results[idx].concept;
+    const newUrl = generateLogoImage(industry, style, c.primaryColor, c.secondaryColor, c.shape, Math.floor(Math.random() * 999999));
+    setResults(prev => {
+      if (!prev) return prev;
+      const u = [...prev] as [LogoResult, LogoResult];
+      u[idx] = { ...u[idx], iconUrl: newUrl, iconLoaded: false };
+      return u;
+    });
+    setRegenerating(null);
   };
 
   const markLoaded = (idx: 0 | 1) => {
     setResults(prev => {
       if (!prev) return prev;
-      const updated = [...prev] as [LogoResult, LogoResult];
-      updated[idx] = { ...updated[idx], loaded: true };
-      return updated;
+      const u = [...prev] as [LogoResult, LogoResult];
+      u[idx] = { ...u[idx], iconLoaded: true };
+      return u;
     });
   };
 
@@ -132,6 +176,13 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDownload = async () => {
+    if (!chosenResult) return;
+    setDownloading(true);
+    try { await downloadComposite(chosenResult, exportW, exportH); }
+    finally { setDownloading(false); }
+  };
+
   return (
     <div className="space-y-5">
 
@@ -139,7 +190,7 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex-1 min-w-[160px]">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-0.5">AI Model</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Picks colors, fonts & brand direction</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Designs colors, shape & brand strategy</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setAiProvider("anthropic")}
@@ -157,8 +208,8 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
       <form onSubmit={run} className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">AI Logo Generator</p>
-          <h3 className="mt-0.5 text-lg font-bold text-gray-900 dark:text-white">Describe your brand → get 2 real AI logo images</h3>
-          <p className="mt-1 text-xs text-gray-400">AI designs the brand strategy · Flux generates the actual logo images · Free to download</p>
+          <h3 className="mt-0.5 text-lg font-bold text-gray-900 dark:text-white">Describe your brand → get 2 real AI logo concepts</h3>
+          <p className="mt-1 text-xs text-gray-400">AI designs brand strategy · Flux renders the icon · Text overlaid perfectly · Free to download</p>
         </div>
 
         <div>
@@ -170,13 +221,13 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
 
         <div className="grid gap-3 sm:grid-cols-3">
           {([
-            { label: "Industry", val: industry, set: setIndustry, opts: INDUSTRIES },
-            { label: "Style",    val: style,    set: setStyle,    opts: STYLES    },
-            { label: "Platform", val: platform, set: setPlatform, opts: PLATFORMS },
+            { label:"Industry", val:industry, set:setIndustry, opts:INDUSTRIES },
+            { label:"Style",    val:style,    set:setStyle,    opts:STYLES    },
+            { label:"Platform", val:platform, set:setPlatform, opts:PLATFORMS },
           ] as const).map(({ label, val, set, opts }) => (
             <div key={label}>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-              <select value={val} onChange={e => (set as (v: string) => void)(e.target.value)}
+              <select value={val} onChange={e => (set as (v:string)=>void)(e.target.value)}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                 {opts.map(o => <option key={o}>{o}</option>)}
               </select>
@@ -195,8 +246,8 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
 
         {loading && (
           <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 px-4 py-3 border border-violet-100 dark:border-violet-900">
-            <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">Step 1 of 2 — AI is designing your brand strategy…</p>
-            <p className="text-xs text-violet-500 mt-0.5">Then Flux will render 2 real logo images. Usually 10–20 seconds total.</p>
+            <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">AI is designing your brand strategy…</p>
+            <p className="text-xs text-violet-500 mt-0.5">Then Flux renders the icon. Text is overlaid in perfect spelling. Usually 10–20 seconds.</p>
           </div>
         )}
       </form>
@@ -204,57 +255,73 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
       {/* ── Results ── */}
       <AnimatePresence>
         {results && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-
+          <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Pick your favourite concept</p>
 
-            {/* Concept cards */}
             <div className="grid gap-4 sm:grid-cols-2">
               {results.map((r, i) => (
-                <motion.div key={i} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }}
-                  onClick={() => setChosen(i as 0 | 1)}
-                  className={`cursor-pointer rounded-2xl border-2 bg-white overflow-hidden transition-all dark:bg-gray-900 ${chosen === i ? "border-violet-500 shadow-lg shadow-violet-500/10" : "border-gray-200 hover:border-violet-200 dark:border-gray-700"}`}>
+                <motion.div key={i} initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }} transition={{ delay: i * 0.08 }}
+                  onClick={() => setChosen(i as 0|1)}
+                  className={`cursor-pointer rounded-2xl border-2 bg-white overflow-hidden transition-all dark:bg-gray-900 ${chosen===i ? "border-violet-500 shadow-lg shadow-violet-500/10" : "border-gray-200 hover:border-violet-200 dark:border-gray-700"}`}>
 
-                  {/* Logo image */}
-                  <div className="relative bg-gray-100 dark:bg-gray-800" style={{ aspectRatio: "1/1" }}>
-                    {!r.loaded && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                        <RefreshCw size={20} className="animate-spin text-violet-400"/>
-                        <p className="text-xs text-gray-400">Rendering logo…</p>
-                      </div>
-                    )}
-                    <img
-                      src={r.imageUrl}
-                      alt={`Logo concept ${i + 1}`}
-                      onLoad={() => markLoaded(i as 0 | 1)}
-                      className={`w-full h-full object-contain transition-opacity duration-500 ${r.loaded ? "opacity-100" : "opacity-0"}`}
-                    />
+                  {/* Logo preview — icon + overlaid text */}
+                  <div className="relative flex flex-col items-center justify-center bg-white dark:bg-gray-950 p-6 gap-3"
+                    style={{ minHeight: 260 }}>
+
+                    {/* Icon area */}
+                    <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+                      {!r.iconLoaded && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                          <RefreshCw size={18} className="animate-spin text-violet-400"/>
+                          <p className="text-[10px] text-gray-400">Rendering icon…</p>
+                        </div>
+                      )}
+                      <img
+                        src={r.iconUrl}
+                        alt={`Logo icon ${i+1}`}
+                        onLoad={() => markLoaded(i as 0|1)}
+                        onError={() => markLoaded(i as 0|1)}
+                        className={`w-full h-full object-contain rounded-2xl transition-opacity duration-500 ${r.iconLoaded ? "opacity-100" : "opacity-0"}`}
+                        style={{ background: "white" }}
+                      />
+                    </div>
+
+                    {/* Brand name — always perfectly spelled */}
+                    <div className="text-center space-y-1">
+                      <p className="text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none"
+                        style={{ color: r.concept.primaryColor }}>{r.concept.name}</p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wide">{r.concept.tagline}</p>
+                      {/* Color accent bar */}
+                      <div className="mx-auto mt-1 h-0.5 w-12 rounded-full"
+                        style={{ background: `linear-gradient(90deg, ${r.concept.primaryColor}, ${r.concept.secondaryColor})` }}/>
+                    </div>
+
+                    {/* Chosen badge */}
                     {chosen === i && (
                       <div className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 shadow">
                         <Check size={12} className="text-white"/>
                       </div>
                     )}
-                    {/* Regenerate button */}
+
+                    {/* Regenerate icon button */}
                     <button
-                      onClick={e => { e.stopPropagation(); regenerateOne(i as 0 | 1); }}
+                      onClick={e => { e.stopPropagation(); regenerateOne(i as 0|1); }}
                       disabled={regenerating !== null}
-                      className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/80 backdrop-blur-sm disabled:opacity-50">
-                      <RefreshCw size={11} className={regenerating === i ? "animate-spin" : ""}/>
-                      New variation
+                      className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-xl bg-black/50 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-black/70 backdrop-blur-sm disabled:opacity-50">
+                      <RefreshCw size={10} className={regenerating===i ? "animate-spin" : ""}/>
+                      New icon
                     </button>
                   </div>
 
                   {/* Concept info */}
-                  <div className="p-4 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <p className="font-bold text-gray-900 dark:text-white">{r.concept.name}</p>
-                      <p className="text-xs font-medium text-violet-600 dark:text-violet-400">{r.concept.style}</p>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">"{r.concept.tagline}"</p>
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <span className="h-4 w-4 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm" style={{ background: r.concept.primaryColor }}/>
-                      <span className="h-4 w-4 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm" style={{ background: r.concept.secondaryColor }}/>
-                      <span className="text-[10px] font-mono text-gray-400">{r.concept.primaryColor} · {r.concept.secondaryColor}</span>
+                  <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{r.concept.style}</p>
+                      <div className="flex gap-1.5">
+                        <span className="h-3.5 w-3.5 rounded-full border border-gray-200 dark:border-gray-700" style={{ background: r.concept.primaryColor }}/>
+                        <span className="h-3.5 w-3.5 rounded-full border border-gray-200 dark:border-gray-700" style={{ background: r.concept.secondaryColor }}/>
+                        <span className="text-[10px] font-mono text-gray-400">{r.concept.primaryColor}</span>
+                      </div>
                     </div>
                     <p className="text-xs text-gray-400 leading-relaxed">{r.concept.rationale}</p>
                   </div>
@@ -262,15 +329,15 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
               ))}
             </div>
 
-            {/* ── Download panel for chosen concept ── */}
+            {/* ── Download panel ── */}
             {chosenResult && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
                 className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 space-y-4">
 
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Selected concept — download</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Download your logo</p>
 
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* Color swatches */}
+                <div className="flex flex-wrap gap-6">
+                  {/* Colors */}
                   <div>
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Brand colors</p>
                     <div className="flex items-center gap-3">
@@ -288,13 +355,13 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
                   </div>
 
                   {/* Download controls */}
-                  <div className="flex-1 min-w-[200px]">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Download size</p>
+                  <div className="flex-1 min-w-[220px]">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Size & format</p>
                     <div className="flex flex-wrap gap-2">
                       <div className="relative" ref={sizesRef}>
                         <button onClick={() => setShowSizes(v => !v)}
                           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
-                          {EXPORT_SIZES.find(s => s.w === exportW && s.h === exportH)?.label ?? "Select size"} <ChevronDown size={11}/>
+                          {EXPORT_SIZES.find(s => s.w===exportW && s.h===exportH)?.label ?? "Select size"} <ChevronDown size={11}/>
                         </button>
                         {showSizes && (
                           <div className="absolute left-0 top-10 z-20 w-56 rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
@@ -308,47 +375,35 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
                           </div>
                         )}
                       </div>
-
-                      <button
-                        onClick={() => downloadFromUrl(
-                          chosenResult.imageUrl,
-                          `${chosenResult.concept.name.toLowerCase().replace(/\s+/g, "-")}-logo-${exportW}x${exportH}.png`
-                        )}
-                        disabled={!chosenResult.loaded}
+                      <button onClick={handleDownload} disabled={!chosenResult.iconLoaded || downloading}
                         className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <Download size={13}/> Download PNG
+                        {downloading ? <><RefreshCw size={12} className="animate-spin"/> Building…</> : <><Download size={13}/> Download PNG</>}
                       </button>
                     </div>
-                    {tier !== "premium" && (
-                      <p className="mt-2 text-xs text-gray-400">Upgrade to Pro for SVG vector export and brand kit</p>
-                    )}
+                    <p className="mt-1.5 text-[11px] text-gray-400">Downloads icon + brand name + tagline composited onto white background</p>
+                    {tier !== "premium" && <p className="mt-1 text-[11px] text-gray-400">Upgrade to Pro for SVG vector export</p>}
                   </div>
                 </div>
 
                 {/* Brand brief */}
-                <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Brand brief</p>
-                  <div className="grid gap-2 sm:grid-cols-2 text-xs text-gray-600 dark:text-gray-400">
-                    <div><span className="font-medium text-gray-700 dark:text-gray-300">Name: </span>{chosenResult.concept.name}</div>
-                    <div><span className="font-medium text-gray-700 dark:text-gray-300">Style: </span>{chosenResult.concept.style}</div>
-                    <div><span className="font-medium text-gray-700 dark:text-gray-300">Tagline: </span>"{chosenResult.concept.tagline}"</div>
-                    <div><span className="font-medium text-gray-700 dark:text-gray-300">Font: </span>{chosenResult.concept.fontStyle}</div>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 italic">{chosenResult.concept.rationale}</p>
+                <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-4 grid gap-2 sm:grid-cols-2 text-xs">
+                  <div><span className="font-semibold text-gray-700 dark:text-gray-300">Name: </span><span className="text-gray-500">{chosenResult.concept.name}</span></div>
+                  <div><span className="font-semibold text-gray-700 dark:text-gray-300">Style: </span><span className="text-gray-500">{chosenResult.concept.style}</span></div>
+                  <div><span className="font-semibold text-gray-700 dark:text-gray-300">Tagline: </span><span className="text-gray-500">"{chosenResult.concept.tagline}"</span></div>
+                  <div><span className="font-semibold text-gray-700 dark:text-gray-300">Font direction: </span><span className="text-gray-500">{chosenResult.concept.fontStyle}</span></div>
+                  <div className="sm:col-span-2 italic text-gray-400">{chosenResult.concept.rationale}</div>
                 </div>
-
               </motion.div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Empty state */}
       {!results && !loading && (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center dark:border-gray-700 dark:bg-gray-800/40 space-y-2">
           <ImageIcon size={32} className="mx-auto text-gray-300 dark:text-gray-600"/>
           <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Your logo concepts will appear here</p>
-          <p className="text-xs text-gray-400">AI designs the brand · Flux renders real logo images · Free to download</p>
+          <p className="text-xs text-gray-400">AI icon + perfect text overlay · No spelling errors · Free download</p>
         </div>
       )}
     </div>

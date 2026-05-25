@@ -270,50 +270,71 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
 
 // ─── Logo Generation via Pollinations Flux (free, no key needed) ──────────────
 // Builds a highly specific logo prompt and returns a Pollinations image URL.
+// Generates ONLY the icon/symbol — NO text in the prompt.
+// Text (brand name + tagline) is overlaid by CSS in LogoGeneratorTool.
+// This avoids Flux hallucinating/misspelling letters entirely.
 export function generateLogoImage(
-  brandName: string,
   industry: string,
   style: string,
   primaryColor: string,
   secondaryColor: string,
   shape: string,
-  tagline: string,
   seed?: number
 ): string {
   const styleMap: Record<string, string> = {
-    "Modern": "modern clean geometric",
-    "Minimalist": "minimalist simple flat",
-    "Bold": "bold strong impactful",
-    "Playful": "playful fun colorful",
-    "Luxury": "luxury premium elegant sophisticated",
-    "Vintage": "vintage retro classic",
-    "Futuristic": "futuristic tech sci-fi",
-    "Handcrafted": "handcrafted artisan organic",
-    "Corporate": "corporate professional clean",
-    "Retro": "retro nostalgic vintage",
+    "Modern": "modern clean geometric vector icon",
+    "Minimalist": "minimalist single-line flat icon",
+    "Bold": "bold strong solid icon mark",
+    "Playful": "playful colorful fun icon",
+    "Luxury": "luxury elegant premium symbol",
+    "Vintage": "vintage ornate classic emblem",
+    "Futuristic": "futuristic neon glowing tech icon",
+    "Handcrafted": "handcrafted organic artisan symbol",
+    "Corporate": "corporate professional clean mark",
+    "Retro": "retro bold graphic icon",
   };
 
   const shapeMap: Record<string, string> = {
-    "circle": "circular badge emblem",
-    "rounded": "rounded square badge",
-    "hexagon": "hexagonal badge",
-    "shield": "shield crest emblem",
-    "diamond": "diamond shaped badge",
+    "circle": "inside a perfect circle",
+    "rounded": "inside a rounded square",
+    "hexagon": "inside a hexagon",
+    "shield": "shield shaped crest",
+    "diamond": "inside a diamond shape",
   };
 
-  const styleDesc = styleMap[style] ?? "modern clean";
-  const shapeDesc = shapeMap[shape] ?? "rounded badge";
+  const industryIconMap: Record<string, string> = {
+    "Creator / Content": "camera, play button, or star burst",
+    "Tech & SaaS": "circuit node, lightning bolt, or abstract network",
+    "Fashion & Lifestyle": "crown, diamond, or leaf",
+    "Food & Beverage": "fork, leaf, or flame",
+    "Health & Fitness": "pulse line, leaf, or dumbbell",
+    "Education": "open book, torch, or graduation cap",
+    "Finance": "upward arrow, coin, or graph",
+    "Real Estate": "house outline or city skyline",
+    "Gaming": "controller, joystick, or pixel sword",
+    "Music & Arts": "music note, brush, or soundwave",
+    "Travel": "compass, plane, or mountain peak",
+    "E-commerce": "shopping bag, tag, or cart",
+    "Non-profit": "hands, heart, or globe",
+    "Sports": "lightning bolt, trophy, or flame",
+    "Beauty": "flower, diamond, or mirror",
+  };
+
+  const styleDesc = styleMap[style] ?? "modern clean vector icon";
+  const shapeDesc = shapeMap[shape] ?? "inside a rounded shape";
+  const iconHint = industryIconMap[industry] ?? "abstract geometric symbol";
 
   const prompt = [
-    `professional ${styleDesc} logo design for "${brandName}"`,
-    `${industry} brand`,
-    `${shapeDesc} logo mark`,
-    `color palette ${primaryColor} and ${secondaryColor}`,
-    `tagline "${tagline}"`,
-    `vector style, white background, centered composition`,
-    `high quality brand identity, no text except brand name`,
-    `sharp clean edges, professional graphic design`,
-    `isolated logo on white, PNG style`,
+    `${styleDesc} logo mark symbol`,
+    `${shapeDesc}`,
+    `inspired by ${iconHint}`,
+    `primary color ${primaryColor} secondary color ${secondaryColor}`,
+    `pure white background`,
+    `NO letters NO text NO words NO typography`,
+    `centered composition, vector flat design`,
+    `professional logo icon only, sharp clean edges`,
+    `isolated symbol on white background`,
+    `high contrast professional brand mark`,
   ].join(", ");
 
   const encoded = encodeURIComponent(prompt);
