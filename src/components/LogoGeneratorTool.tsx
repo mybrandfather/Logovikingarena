@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, RefreshCw, Sparkles, Check, Copy, ChevronDown } from "lucide-react";
 import { runLogoAI, type LogoConcept, type AIProvider } from "../ai";
-
 interface Props {
   aiProvider: AIProvider;
   setAiProvider: (p: AIProvider) => void;
@@ -55,7 +54,7 @@ function LogoCanvas({ concept, size = 200 }: { concept: LogoConcept; size?: numb
       ];
       const grd = ctx.createLinearGradient(0, 0, size, size);
       grd.addColorStop(0, match[0]);
-      grd.addColorAddColorStop(1, match[1] ?? match[0]);
+      grd.addColorStop(1, match[1] ?? match[0]);
       ctx.fillStyle = grd;
     } else {
       ctx.fillStyle = concept.primaryColor;
@@ -235,7 +234,6 @@ export default function LogoGeneratorTool({
 
   const chosenConcept =
     concepts && chosenIndex !== null ? concepts[chosenIndex] : null;
-
   const run = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -270,6 +268,7 @@ export default function LogoGeneratorTool({
       setLoading(false);
     }
   };
+
   const copyColors = () => {
     if (!chosenConcept) return;
 
@@ -319,7 +318,6 @@ export default function LogoGeneratorTool({
           </button>
         </div>
       </div>
-
       {/* INPUT FORM */}
       <form
         onSubmit={run}
@@ -390,7 +388,6 @@ export default function LogoGeneratorTool({
           )}
         </button>
       </form>
-
       {/* RESULTS */}
       <AnimatePresence>
         {concepts && (
