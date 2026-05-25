@@ -268,6 +268,59 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
   }
 }
 
+// ─── Logo Generation via Pollinations Flux (free, no key needed) ──────────────
+// Builds a highly specific logo prompt and returns a Pollinations image URL.
+export function generateLogoImage(
+  brandName: string,
+  industry: string,
+  style: string,
+  primaryColor: string,
+  secondaryColor: string,
+  shape: string,
+  tagline: string,
+  seed?: number
+): string {
+  const styleMap: Record<string, string> = {
+    "Modern": "modern clean geometric",
+    "Minimalist": "minimalist simple flat",
+    "Bold": "bold strong impactful",
+    "Playful": "playful fun colorful",
+    "Luxury": "luxury premium elegant sophisticated",
+    "Vintage": "vintage retro classic",
+    "Futuristic": "futuristic tech sci-fi",
+    "Handcrafted": "handcrafted artisan organic",
+    "Corporate": "corporate professional clean",
+    "Retro": "retro nostalgic vintage",
+  };
+
+  const shapeMap: Record<string, string> = {
+    "circle": "circular badge emblem",
+    "rounded": "rounded square badge",
+    "hexagon": "hexagonal badge",
+    "shield": "shield crest emblem",
+    "diamond": "diamond shaped badge",
+  };
+
+  const styleDesc = styleMap[style] ?? "modern clean";
+  const shapeDesc = shapeMap[shape] ?? "rounded badge";
+
+  const prompt = [
+    `professional ${styleDesc} logo design for "${brandName}"`,
+    `${industry} brand`,
+    `${shapeDesc} logo mark`,
+    `color palette ${primaryColor} and ${secondaryColor}`,
+    `tagline "${tagline}"`,
+    `vector style, white background, centered composition`,
+    `high quality brand identity, no text except brand name`,
+    `sharp clean edges, professional graphic design`,
+    `isolated logo on white, PNG style`,
+  ].join(", ");
+
+  const encoded = encodeURIComponent(prompt);
+  const s = seed ?? Math.floor(Math.random() * 999999);
+  return `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&seed=${s}&nologo=true&model=flux&enhance=true`;
+}
+
 // ─── Image Generation via Pollinations (free, no key needed) ─────────────────
 export async function generateImage(prompt: string, style: string, ratio: string): Promise<string> {
   const w = ratio === "16:9" ? 1280 : ratio === "9:16" ? 720 : ratio === "4:3" ? 1024 : 1024;
