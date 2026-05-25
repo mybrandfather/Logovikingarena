@@ -130,16 +130,16 @@ function LogoCanvas({ concept, size = 200 }: { concept: LogoConcept; size?: numb
     />
   );
 }
-function downloadLogo(concept: LogoConcept, exportSize: number) {
+function downloadLogo(concept: LogoConcept, exportW: number, exportH: number) {
   const canvas = document.createElement("canvas");
-  canvas.width = exportSize;
-  canvas.height = exportSize;
+  canvas.width = exportW;
+  canvas.height = exportH;
 
   const ctx = canvas.getContext("2d")!;
-  const size = exportSize;
+  const size = Math.min(exportW, exportH);
 
-  const cx = size / 2;
-  const cy = size / 2;
+  const cx = exportW / 2;
+  const cy = exportH / 2;
   const rs = size * 0.42;
   const r = size * 0.12;
 
@@ -148,7 +148,7 @@ function downloadLogo(concept: LogoConcept, exportSize: number) {
       concept.primaryColor,
       concept.secondaryColor
     ];
-    const grd = ctx.createLinearGradient(0, 0, size, size);
+    const grd = ctx.createLinearGradient(0, 0, exportW, exportH);
     grd.addColorStop(0, match[0]);
     grd.addColorStop(1, match[1] ?? match[0]);
     ctx.fillStyle = grd;
@@ -204,9 +204,10 @@ function downloadLogo(concept: LogoConcept, exportSize: number) {
   ctx.shadowColor = "rgba(0,0,0,0.18)";
   ctx.shadowBlur = size * 0.04;
   ctx.fillText(concept.initials, cx, cy + size * 0.02);
+  ctx.shadowBlur = 0;
 
   const link = document.createElement("a");
-  link.download = `${concept.name.toLowerCase().replace(/\s+/g, "-")}-logo-${exportSize}px.png`;
+  link.download = `${concept.name.toLowerCase().replace(/\s+/g, "-")}-logo-${exportW}x${exportH}px.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
 }
@@ -231,6 +232,18 @@ export default function LogoGeneratorTool({
   const [copied, setCopied] = useState(false);
   const [exportSize, setExportSize] = useState(800);
   const [showSizes, setShowSizes] = useState(false);
+  const sizeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showSizes) return;
+    const handler = (e: MouseEvent) => {
+      if (sizeDropdownRef.current && !sizeDropdownRef.current.contains(e.target as Node)) {
+        setShowSizes(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showSizes]);
 
   const chosenConcept =
     concepts && chosenIndex !== null ? concepts[chosenIndex] : null;
@@ -255,6 +268,9 @@ export default function LogoGeneratorTool({
 
     try {
       const result = await runLogoAI(prompt, industry, style, platform, aiProvider);
+      if (!Array.isArray(result) || result.length === 0) {
+        throw new Error("AI returned an empty or invalid response. Check your API key in Vercel environment variables.");
+      }
       setConcepts(result);
       setChosenIndex(0);
     } catch (e: unknown) {
@@ -525,7 +541,7 @@ export default function LogoGeneratorTool({
                       <div className="flex flex-wrap gap-2">
 
                         {/* Size dropdown */}
-                        <div className="relative">
+                        <div className="relative" ref={sizeDropdownRef}>
                           <button
                             onClick={() => setShowSizes((v) => !v)}
                             className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -557,7 +573,10 @@ export default function LogoGeneratorTool({
 
                         {/* Download button */}
                         <button
-                          onClick={() => downloadLogo(chosenConcept, exportSize)}
+                          onClick={() => {
+                            const sizeObj = SIZES.find((s) => s.w === exportSize) ?? SIZES[0];
+                            downloadLogo(chosenConcept, sizeObj.w, sizeObj.h);
+                          }}
                           className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700"
                         >
                           <Download size={13} /> Download PNG
