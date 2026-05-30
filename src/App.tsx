@@ -13,6 +13,7 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
+import { Analytics } from "@vercel/analytics/react";
 
 // Lazy-loaded heavy tools (only fetched when the user opens them)
 const BackgroundRemoverTool = lazy(() => import("./components/BackgroundRemoverTool"));
@@ -1447,6 +1448,7 @@ function Shell(){
       </main>
       <Footer/>
       <BackToTop/>
+      <Analytics />
     </div>
   );
 }
