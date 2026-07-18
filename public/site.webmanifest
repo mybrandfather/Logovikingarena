@@ -1,0 +1,59 @@
+{
+  "name": "Logoviking — Creator + Designer + SEO Toolkit",
+  "short_name": "Logoviking",
+  "description": "All-in-one creator, designer, and SEO toolkit with 60+ free tools.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#7C3AED",
+  "categories": ["productivity", "utilities", "graphics", "business"],
+  "icons": [
+    {
+      "src": "/images/logoviking-helmet-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logoviking-helmet-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "All Tools",
+      "short_name": "Tools",
+      "description": "Browse all creator tools",
+      "url": "/tools",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Logo Generator",
+      "short_name": "Logo",
+      "description": "Generate AI logo concepts",
+      "url": "/tools/logo-generator",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Image Generator",
+      "short_name": "AI Image",
+      "description": "Generate images from prompts",
+      "url": "/tools/ai-image-generator",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

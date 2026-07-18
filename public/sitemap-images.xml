@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://logoviking.com/</loc>
+    <image:image>
+      <image:loc>https://logoviking.com/images/logoviking-helmet-logo.png</image:loc>
+      <image:title>Logoviking Logo</image:title>
+      <image:caption>Logoviking — Creator + Designer + SEO Toolkit</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://logoviking.com/images/hero-bg.jpg</image:loc>
+      <image:title>Logoviking Hero Background</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://logoviking.com/images/logo-preview.png</image:loc>
+      <image:title>Logoviking Logo Preview</image:title>
+    </image:image>
+  </url>
+</urlset>
