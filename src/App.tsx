@@ -1529,14 +1529,14 @@ function Header({menuOpen,setMenuOpen}:{menuOpen:boolean;setMenuOpen:(v:boolean)
   return(
     <header className="sticky top-0 z-50 border-b border-gray-200/80 bg-white/95 backdrop-blur-xl dark:border-gray-800/80 dark:bg-gray-950/95">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
-        {/* Logo — helmet icon + two-color LogoViking wordmark */}
-        <Link to="/" className="group flex shrink-0 items-center gap-1.5 sm:gap-2.5" aria-label="Logoviking — home">
+        {/* Logo — premium LogoViking brand mark */}
+        <Link to="/" className="group flex shrink-0 items-center gap-2" aria-label="Logoviking — home">
           <img
-            src="/images/logoviking-helmet-logo.png"
-            alt=""
-            width={56}
-            height={56}
-            className="h-10 w-10 object-contain transition-transform group-hover:scale-105 sm:h-12 sm:w-12 lg:h-14 lg:w-14"
+            src="/images/logoviking-main-logo.png"
+            alt="LogoViking"
+            width={48}
+            height={48}
+            className="h-10 w-10 object-contain transition-transform group-hover:scale-105 sm:h-11 sm:w-11 lg:h-12 lg:w-12 drop-shadow-md"
             loading="eager"
           />
           <div className="flex flex-col leading-none">
@@ -3080,7 +3080,7 @@ function Footer(){
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <img
-                src="/images/logoviking-helmet-logo.png"
+                src="/images/logoviking-main-logo.png"
                 alt="Logoviking logo"
                 className="h-16 w-16 object-contain"
                 loading="lazy"
