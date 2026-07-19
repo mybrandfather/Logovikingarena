@@ -186,23 +186,6 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
   return (
     <div className="space-y-5">
 
-      {/* ── Model selector ── */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex-1 min-w-[160px]">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-0.5">AI Model</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Designs colors, shape & brand strategy</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setAiProvider("anthropic")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${aiProvider === "anthropic" ? "bg-violet-600 text-white shadow-sm" : "border border-gray-200 text-gray-600 hover:border-violet-300 dark:border-gray-700 dark:text-gray-400"}`}>
-            <Sparkles size={13}/> Claude
-          </button>
-          <button onClick={() => setAiProvider("openai")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${aiProvider === "openai" ? "bg-violet-600 text-white shadow-sm" : "border border-gray-200 text-gray-600 hover:border-violet-300 dark:border-gray-700 dark:text-gray-400"}`}>
-            <Zap size={13}/> GPT-4o
-          </button>
-        </div>
-      </div>
 
       {/* ── Input form ── */}
       <form onSubmit={run} className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-4">

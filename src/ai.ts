@@ -470,16 +470,20 @@ export async function runAITool(
   const system = getSystemPrompt(tool.slug, tool.name);
   const user = buildUserPrompt(tool, input, extras);
 
-  // Use the explicitly chosen paid provider if key exists
-  if (provider === "anthropic" && ak) return callAnthropic(system, user, ak);
-  if (provider === "openai" && ok) return callOpenAI(system, user, ok);
+  try {
+    // Use the explicitly chosen paid provider if key exists
+    if (provider === "anthropic" && ak) return await callAnthropic(system, user, ak);
+    if (provider === "openai" && ok) return await callOpenAI(system, user, ok);
 
-  // Fall back to any available paid key
-  if (ak) return callAnthropic(system, user, ak);
-  if (ok) return callOpenAI(system, user, ok);
+    // Fall back to any available paid key
+    if (ak) return await callAnthropic(system, user, ak);
+    if (ok) return await callOpenAI(system, user, ok);
+  } catch (err) {
+    console.warn("Paid API failed, falling back to Pollinations:", err);
+  }
 
   // Free fallback — always works, no key needed
-  return callPollinations(system, user);
+  return await callPollinations(system, user);
 }
 
 // ─── Detect which provider will be used (for UI display) ─────────────────────
@@ -597,20 +601,25 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
   };
 
   try {
-    if (provider === "anthropic" && ak) return callLogo(ak, true);
-    if (provider === "openai" && ok) return callLogo(ok, false);
-    if (ak) return callLogo(ak, true);
-    if (ok) return callLogo(ok, false);
+    if (provider === "anthropic" && ak) return await callLogo(ak, true);
+    if (provider === "openai" && ok) return await callLogo(ok, false);
+    if (ak) return await callLogo(ak, true);
+    if (ok) return await callLogo(ok, false);
     // Free fallback
     return await callLogoPollinations();
-  } catch {
-    // Graceful hardcoded fallback if everything fails
-    const name = prompt.slice(0, 18).trim() || "Brand";
-    const ini = name.slice(0, 2).toUpperCase();
-    return [
-      { id: 1, name, tagline: "Built for creators", style: "Modern Gradient", primaryColor: "#7C3AED", secondaryColor: "#06B6D4", bg: "linear-gradient(135deg,#7C3AED,#06B6D4)", shape: "rounded", initials: ini, fontStyle: "font-black tracking-tight", rationale: "Vibrant gradient communicates innovation." },
-      { id: 2, name, tagline: "Stand out. Scale up.", style: "Bold Minimal", primaryColor: "#0F172A", secondaryColor: "#F59E0B", bg: "linear-gradient(135deg,#0F172A,#1E293B)", shape: "circle", initials: ini, fontStyle: "font-extrabold tracking-widest", rationale: "Dark base with amber accent signals authority." },
-    ];
+  } catch (err) {
+    console.warn("Paid Logo API failed, falling back to Pollinations:", err);
+    try {
+      return await callLogoPollinations();
+    } catch {
+      // Graceful hardcoded fallback if everything fails
+      const name = prompt.slice(0, 18).trim() || "Brand";
+      const ini = name.slice(0, 2).toUpperCase();
+      return [
+        { id: 1, name, tagline: "Built for creators", style: "Modern Gradient", primaryColor: "#7C3AED", secondaryColor: "#06B6D4", bg: "linear-gradient(135deg,#7C3AED,#06B6D4)", shape: "rounded", initials: ini, fontStyle: "font-black tracking-tight", rationale: "Vibrant gradient communicates innovation." },
+        { id: 2, name, tagline: "Stand out. Scale up.", style: "Bold Minimal", primaryColor: "#0F172A", secondaryColor: "#F59E0B", bg: "linear-gradient(135deg,#0F172A,#1E293B)", shape: "circle", initials: ini, fontStyle: "font-extrabold tracking-widest", rationale: "Dark base with amber accent signals authority." },
+      ];
+    }
   }
 }
 

@@ -118,25 +118,8 @@ export default function AIImageGeneratorTool({ aiProvider, setAiProvider, record
   return (
     <div className="space-y-5">
 
-      {/* ── Model + Ratio selectors (top bar) ── */}
+      {/* ── Ratio selectors (top bar) ── */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 space-y-4">
-        {/* Model */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-[140px]">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">AI Model</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Prompt optimizer uses this model</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setAiProvider("anthropic")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${aiProvider === "anthropic" ? "bg-violet-600 text-white shadow-sm" : "border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600 dark:border-gray-700 dark:text-gray-400"}`}>
-              <Sparkles size={14}/> Claude
-            </button>
-            <button onClick={() => setAiProvider("openai")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${aiProvider === "openai" ? "bg-violet-600 text-white shadow-sm" : "border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600 dark:border-gray-700 dark:text-gray-400"}`}>
-              <Zap size={14}/> GPT-4o
-            </button>
-          </div>
-        </div>
 
         {/* Aspect ratio */}
         <div>
