@@ -571,8 +571,18 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
       }),
     });
     const raw = await res.text();
-    const p = JSON.parse(raw.replace(/```json|```/g, "").trim()) as { conceptA: LogoConcept; conceptB: LogoConcept };
-    return [{ ...p.conceptA, id: 1 }, { ...p.conceptB, id: 2 }];
+    // Clean up common response wrapper variations
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    let parsed: { conceptA?: LogoConcept; conceptB?: LogoConcept } = {};
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Try extracting JSON object from response if it has surrounding text
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    }
+    if (!parsed.conceptA || !parsed.conceptB) throw new Error("Invalid logo response");
+    return [{ ...parsed.conceptA, id: 1 }, { ...parsed.conceptB, id: 2 }];
   };
 
   try {

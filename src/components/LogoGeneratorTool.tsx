@@ -125,7 +125,7 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
       // Step 1: AI designs the brand (colors, shape, tagline, rationale)
       const concepts = await runLogoAI(prompt, industry, style, platform, aiProvider);
       if (!Array.isArray(concepts) || concepts.length < 2) {
-        setErr("AI returned an unexpected response. Check your API key has credits and try again."); return;
+        setErr("Generation failed — please try again. The free AI is sometimes busy."); return;
       }
 
       // Step 2: Generate icon images (NO text) via Flux — parallel

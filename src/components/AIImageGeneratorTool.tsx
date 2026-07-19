@@ -42,6 +42,8 @@ export default function AIImageGeneratorTool({ aiProvider, setAiProvider, record
   const [copied, setCopied] = useState<number | null>(null);
   const [variations, setVariations] = useState<string[]>([]);
   const [activeVariant, setActiveVariant] = useState(0);
+  const [imgError, setImgError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const selectedStyle = STYLES.find(s => s.id === style) ?? STYLES[0];
   const selectedRatio = RATIOS.find(r => r.id === ratio) ?? RATIOS[0];
@@ -66,11 +68,23 @@ export default function AIImageGeneratorTool({ aiProvider, setAiProvider, record
     if (!p.trim()) { setErr("Describe what you want to generate."); return; }
     const u = recordUse("ai-image-generator", p);
     if (!u.allowed) { setErr("Daily limit reached. Upgrade to Pro for unlimited generations."); return; }
-    setErr(""); setLoadingImg(true); setImgLoaded(false); setVariations([]); setActiveVariant(0);
+    setErr(""); setLoadingImg(true); setImgLoaded(false); setImgError(false); setVariations([]); setActiveVariant(0);
     try {
       const url = await generateImage(p, selectedStyle.label, ratio);
       setImageUrl(url);
-    } catch (e: unknown) { setErr(e instanceof Error ? e.message : "Image generation failed"); }
+      setRetryCount(0);
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : "Image generation failed — please try again."); }
+    finally { setLoadingImg(false); }
+  };
+
+  const retryGenerate = async () => {
+    if (!prompt.trim() && !imageUrl) return;
+    setImgError(false); setImgLoaded(false); setLoadingImg(true);
+    try {
+      const url = await generateImage(prompt || "abstract art", selectedStyle.label, ratio);
+      setImageUrl(url);
+      setRetryCount(c => c + 1);
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : "Retry failed — please try again."); }
     finally { setLoadingImg(false); }
   };
 
@@ -208,12 +222,30 @@ export default function AIImageGeneratorTool({ aiProvider, setAiProvider, record
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <RefreshCw size={28} className="animate-spin text-violet-400"/>
                   <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Generating your image…</p>
-                  <p className="text-xs text-gray-400">Usually 5–15 seconds</p>
+                  <p className="text-xs text-gray-400">Usually 5–20 seconds · Free AI is sometimes busy</p>
                 </div>
               )}
-              {currentUrl && (
-                <img src={currentUrl} alt="AI generated" onLoad={() => setImgLoaded(true)}
+              {currentUrl && !imgError && (
+                <img src={currentUrl} alt="AI generated"
+                  onLoad={() => setImgLoaded(true)}
+                  onError={() => { setImgError(true); setImgLoaded(false); }}
                   className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}/>
+              )}
+              {currentUrl && !imgLoaded && !loadingImg && !imgError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                  <RefreshCw size={20} className="animate-spin text-violet-300"/>
+                  <p className="text-xs text-gray-400">Loading image…</p>
+                </div>
+              )}
+              {imgError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
+                  <ImageIcon size={32} className="text-gray-300 dark:text-gray-600"/>
+                  <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Image failed to load — the free AI is sometimes busy</p>
+                  <p className="text-xs text-gray-400 mb-1">This is normal. Just click retry and it will work.</p>
+                  <button onClick={retryGenerate} className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700">
+                    <RefreshCw size={13}/> Try again
+                  </button>
+                </div>
               )}
             </div>
             {currentUrl && imgLoaded && (
