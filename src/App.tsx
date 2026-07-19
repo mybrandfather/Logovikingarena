@@ -1531,13 +1531,11 @@ function Header({menuOpen,setMenuOpen}:{menuOpen:boolean;setMenuOpen:(v:boolean)
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
         {/* Logo — premium LogoViking brand mark */}
         <Link to="/" className="group flex shrink-0 items-center gap-2" aria-label="Logoviking — home">
-          <span className="relative flex shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-transparent ring-1 ring-amber-700/40 group-hover:ring-amber-500/60 transition-all">
+          <span className="relative flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gray-950 ring-1 ring-amber-700/40 group-hover:ring-amber-500/60 transition-all">
             <img
               src="/images/logoviking-main-logo.png"
               alt="LogoViking"
-              width={48}
-              height={48}
-              className="h-10 w-10 object-contain transition-transform group-hover:scale-105 sm:h-11 sm:w-11 lg:h-12 lg:w-12"
+              className="h-full w-full object-cover scale-[1.08] transition-transform group-hover:scale-[1.15]"
               loading="eager"
             />
           </span>
@@ -3081,12 +3079,14 @@ function Footer(){
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
-              <img
-                src="/images/logoviking-main-logo.png"
-                alt="Logoviking logo"
-                className="h-16 w-16 object-contain"
-                loading="lazy"
-              />
+              <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gray-950 ring-1 ring-amber-700/40">
+                <img
+                  src="/images/logoviking-main-logo.png"
+                  alt="Logoviking logo"
+                  className="h-full w-full object-cover scale-[1.08]"
+                  loading="lazy"
+                />
+              </span>
               <div><p className="font-bold text-gray-900 dark:text-white">Logoviking</p><p className="text-xs" style={{color:ct.color}}>{t("label.tagline")}</p></div>
             </Link>
             <p className="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">{t("label.footerDesc")}</p>
