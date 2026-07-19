@@ -411,8 +411,8 @@ async function callAnthropic(system: string, user: string, key: string): Promise
     const e = await res.json().catch(() => ({})) as { error?: { message?: string } };
     throw new Error(e.error?.message ?? `Anthropic ${res.status}`);
   }
-  const d = await res.json() as { content: { type: string; text: string }[] };
-  return parseJSON(d.content.find(b => b.type === "text")?.text ?? "");
+  const d = await res.json() as { content?: { type: string; text: string }[] };
+  return parseJSON((d.content ?? []).find(b => b.type === "text")?.text ?? "");
 }
 
 // ─── Provider: OpenAI ────────────────────────────────────────────────────────
