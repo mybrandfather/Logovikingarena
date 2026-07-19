@@ -543,18 +543,29 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
         headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 900, system, messages: [{ role: "user", content: user }] }),
       });
-      const d = await res.json() as { content: { type: string; text: string }[] };
-      raw = d.content.find(b => b.type === "text")?.text ?? "";
+      if (!res.ok) throw new Error(`Anthropic API error ${res.status}`);
+      const d = await res.json() as { content?: { type: string; text: string }[] };
+      raw = (d.content ?? []).find(b => b.type === "text")?.text ?? "";
     } else {
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
         body: JSON.stringify({ model: "gpt-4o-mini", max_tokens: 900, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
       });
-      const d = await res.json() as { choices: { message: { content: string } }[] };
-      raw = d.choices[0]?.message?.content ?? "";
+      if (!res.ok) throw new Error(`OpenAI API error ${res.status}`);
+      const d = await res.json() as { choices?: { message: { content: string } }[] };
+      raw = d.choices?.[0]?.message?.content ?? "";
     }
-    const p = JSON.parse(raw.replace(/```json|```/g, "").trim()) as { conceptA: LogoConcept; conceptB: LogoConcept };
+    if (!raw.trim()) throw new Error("Empty response from AI");
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    let p: { conceptA?: LogoConcept; conceptB?: LogoConcept } = {};
+    try {
+      p = JSON.parse(cleaned);
+    } catch {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) p = JSON.parse(match[0]);
+    }
+    if (!p.conceptA || !p.conceptB) throw new Error("Invalid AI response format");
     return [{ ...p.conceptA, id: 1 }, { ...p.conceptB, id: 2 }];
   };
 
