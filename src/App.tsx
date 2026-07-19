@@ -164,7 +164,7 @@ const colorThemes: { id: ColorTheme; label: string; color: string; accent: strin
   { id: "violet",  label: "Violet",  color: "#7C3AED", accent: "#0EA5E9", textClass: "text-violet-600 dark:text-violet-400",  bgClass: "bg-violet-600 hover:bg-violet-700",  borderClass: "border-violet-400" },
   { id: "rose",    label: "Rose",    color: "#E11D48", accent: "#1E293B", textClass: "text-rose-600 dark:text-rose-400",      bgClass: "bg-rose-600 hover:bg-rose-700",      borderClass: "border-rose-400"   },
   { id: "emerald", label: "Emerald", color: "#059669", accent: "#0F172A", textClass: "text-emerald-600 dark:text-emerald-400",bgClass: "bg-emerald-600 hover:bg-emerald-700",borderClass: "border-emerald-400"},
-  { id: "amber",   label: "Amber",   color: "#D97706", accent: "#1E293B", textClass: "text-amber-600 dark:text-amber-400",    bgClass: "bg-amber-500 hover:bg-amber-600",    borderClass: "border-amber-400"  },
+  { id: "amber",   label: "Gold Viking", color: "#B8860B", accent: "#C0A060", textClass: "text-amber-700 dark:text-amber-400", bgClass: "bg-amber-700 hover:bg-amber-800",   borderClass: "border-amber-500"  },
   { id: "cyan",    label: "Cyan",    color: "#0891B2", accent: "#1E293B", textClass: "text-cyan-600 dark:text-cyan-400",      bgClass: "bg-cyan-600 hover:bg-cyan-700",      borderClass: "border-cyan-400"   },
 ];
 
@@ -1346,7 +1346,7 @@ function useSite(){const c=useContext(SiteContext);if(!c)throw new Error("useSit
 function SiteProvider({children}:{children:ReactNode}){
   const prefersDark=typeof window!=="undefined"&&window.matchMedia("(prefers-color-scheme: dark)").matches;
   const[theme,setTheme]=useLocalStorage<Theme>("lv-theme",prefersDark?"dark":"light");
-  const[colorTheme,setColorTheme]=useLocalStorage<ColorTheme>("lv-color-theme","violet");
+  const[colorTheme,setColorTheme]=useLocalStorage<ColorTheme>("lv-color-theme","amber");
   const[lang,setLang]=useLocalStorage<LangCode>("lv-lang","en");
   const[account,setAccount]=useLocalStorage<Account>("lv-account",{name:"Guest",email:"",tier:"guest",provider:"guest",authenticated:false});
   const[favorites,setFavorites]=useLocalStorage<string[]>("lv-favs",[]);
@@ -1531,14 +1531,16 @@ function Header({menuOpen,setMenuOpen}:{menuOpen:boolean;setMenuOpen:(v:boolean)
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
         {/* Logo — premium LogoViking brand mark */}
         <Link to="/" className="group flex shrink-0 items-center gap-2" aria-label="Logoviking — home">
-          <img
-            src="/images/logoviking-main-logo.png"
-            alt="LogoViking"
-            width={48}
-            height={48}
-            className="h-10 w-10 object-contain transition-transform group-hover:scale-105 sm:h-11 sm:w-11 lg:h-12 lg:w-12 drop-shadow-md"
-            loading="eager"
-          />
+          <span className="relative flex shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-transparent ring-1 ring-amber-700/40 group-hover:ring-amber-500/60 transition-all">
+            <img
+              src="/images/logoviking-main-logo.png"
+              alt="LogoViking"
+              width={48}
+              height={48}
+              className="h-10 w-10 object-contain transition-transform group-hover:scale-105 sm:h-11 sm:w-11 lg:h-12 lg:w-12"
+              loading="eager"
+            />
+          </span>
           <div className="flex flex-col leading-none">
             <p className="font-black tracking-tight text-base sm:text-lg lg:text-xl">
               <span style={{color:ct.color}}>Logo</span>
