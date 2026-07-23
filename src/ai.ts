@@ -203,19 +203,6 @@ Core output rules:
 4. "Pinterest Keywords" — 8 search keywords
 5. "Visual Concepts" — 3 vertical pin image ideas`,
 
-    "logo-generator": `Produce 5 blocks:
-1. "Brand Identity" — 4 identity recommendations (personality/voice/values/positioning)
-2. "Color Palette" — 4 specific hex colors with names and usage roles
-3. "Typography" — 3 font pairing recommendations with actual font names
-4. "Icon Direction" — 3 logo mark concepts (abstract/lettermark/symbol)
-5. "Tagline Options" — 4 tagline variations (short/bold/descriptive/witty)`,
-
-    "ai-image-generator": `Produce 5 blocks:
-1. "Optimized Prompts" — 3 progressively detailed versions ready for Midjourney/DALL-E/Flux
-2. "Style Modifiers" — 6 specific keywords (lighting/camera/mood/medium/color/rendering)
-3. "Negative Prompts" — 5 things to exclude for cleaner results
-4. "Aspect Ratios" — best ratio per platform with reasoning
-5. "Prompt Variants" — 3 alternative interpretations of the concept`,
 
     // ── LINKEDIN POST GENERATOR ─────────────────────────────────────────────────────────────────────
     "linkedin-post-generator": `You are generating high-performing LinkedIn posts. Produce 4 blocks:
@@ -339,8 +326,6 @@ Core output rules:
     "instagram": "instagram",
     "seo": "seo",
     "pinterest": "pinterest",
-    "logo-generator": "logo-generator",
-    "ai-image-generator": "ai-image-generator",
   };
 
   // Check for direct slug match first

@@ -16,8 +16,6 @@ import { createPortal } from "react-dom";
 
 // Lazy-loaded heavy tools (only fetched when the user opens them)
 const BackgroundRemoverTool = lazy(() => import("./components/BackgroundRemoverTool"));
-const LogoGeneratorTool = lazy(() => import("./components/LogoGeneratorTool"));
-const AIImageGeneratorTool = lazy(() => import("./components/AIImageGeneratorTool"));
 import { toolComponents } from "./components/BuiltInTools";
 
 import { runAITool, getActiveProvider, type AIProvider, type AIToolResult } from "./ai";
@@ -1200,8 +1198,6 @@ const tools: Tool[] = [
   { slug: "avif-converter",         name: "AVIF Converter",          category: "image",   description: "Convert images to AVIF for the smallest possible file sizes." },
   { slug: "watermark-tool",         name: "Watermark Tool",          category: "image",   description: "Add a custom watermark to your images." },
   { slug: "meme-creator",           name: "Meme Creator",            category: "image",   description: "Create viral memes with text overlays." },
-  { slug: "logo-generator",         name: "AI Logo Generator",       category: "image",   description: "Generate professional logo concepts with AI — colors, fonts, and brand identity in seconds.", isNew: true },
-  { slug: "ai-image-generator",     name: "AI Image Generator",      category: "image",   description: "Turn any text prompt into a stunning image — free, no account needed.", isNew: true },
   { slug: "background-remover",     name: "AI Background Remover",   category: "image",   description: "Remove image backgrounds with AI — 100% in your browser, nothing uploaded.", isNew: true },
   { slug: "blur-background",        name: "Blur & Filters",          category: "image",   description: "Apply blur, grayscale, sepia and other filters to any image." },
   { slug: "color-picker",           name: "Color Picker",            category: "image",   description: "Pick and copy exact color codes from any image." },
@@ -2011,21 +2007,6 @@ function Workbench({tool}:{tool:Tool}){
     return(<Suspense fallback={suspenseFallback("Background Remover")}><BackgroundRemoverTool/></Suspense>);
   }
 
-  if(tool.slug==="logo-generator"){
-    return(
-      <Suspense fallback={suspenseFallback("Logo Generator")}>
-        <LogoGeneratorTool aiProvider={aiProvider} setAiProvider={setAiProvider} tier={account.tier} recordUse={recordToolUse}/>
-      </Suspense>
-    );
-  }
-
-  if(tool.slug==="ai-image-generator"){
-    return(
-      <Suspense fallback={suspenseFallback("AI Image Generator")}>
-        <AIImageGeneratorTool aiProvider={aiProvider} setAiProvider={setAiProvider} recordUse={recordToolUse}/>
-      </Suspense>
-    );
-  }
 
   // ── Built-in functional tools (no AI, no daily limit) ──
   const BuiltInTool = toolComponents[tool.slug];
