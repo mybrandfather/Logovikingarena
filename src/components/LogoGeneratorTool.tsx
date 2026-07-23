@@ -103,6 +103,7 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
   const [showSizes, setShowSizes] = useState(false);
   const [regenerating, setRegenerating] = useState<0 | 1 | null>(null);
   const [downloading, setDownloading]   = useState(false);
+  const [imgErrors, setImgErrors]       = useState<[boolean, boolean]>([false, false]);
 
   const sizesRef = useRef<HTMLDivElement>(null);
   const handleOutside = useCallback((e: MouseEvent) => {
@@ -120,7 +121,7 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
     if (!prompt.trim()) { setErr("Enter your brand name or description."); return; }
     const u = recordUse("logo-generator", prompt);
     if (!u.allowed) { setErr("Daily limit reached. Upgrade to Pro for unlimited generations."); return; }
-    setErr(""); setLoading(true); setResults(null);
+    setErr(""); setLoading(true); setResults(null); setImgErrors([false, false]);
     try {
       // Step 1: AI designs the brand (colors, shape, tagline, rationale)
       const concepts = await runLogoAI(prompt, industry, style, platform, aiProvider);
@@ -130,8 +131,8 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
 
       // Step 2: Generate icon images (NO text) via Flux — parallel
       const [urlA, urlB] = [
-        generateLogoImage(industry, style, concepts[0].primaryColor, concepts[0].secondaryColor, concepts[0].shape),
-        generateLogoImage(industry, style, concepts[1].primaryColor, concepts[1].secondaryColor, concepts[1].shape),
+        generateLogoImage(industry, style, concepts[0].primaryColor, concepts[0].secondaryColor, concepts[0].shape, undefined, concepts[0].iconPrompt),
+        generateLogoImage(industry, style, concepts[1].primaryColor, concepts[1].secondaryColor, concepts[1].shape, undefined, concepts[1].iconPrompt),
       ];
 
       setResults([
@@ -150,8 +151,13 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
   const regenerateOne = async (idx: 0 | 1) => {
     if (!results) return;
     setRegenerating(idx);
+    setImgErrors(prev => {
+      const next = [...prev] as [boolean, boolean];
+      next[idx] = false;
+      return next;
+    });
     const c = results[idx].concept;
-    const newUrl = generateLogoImage(industry, style, c.primaryColor, c.secondaryColor, c.shape, Math.floor(Math.random() * 999999));
+    const newUrl = generateLogoImage(industry, style, c.primaryColor, c.secondaryColor, c.shape, Math.floor(Math.random() * 999999), c.iconPrompt);
     setResults(prev => {
       if (!prev) return prev;
       const u = [...prev] as [LogoResult, LogoResult];
@@ -253,20 +259,39 @@ export default function LogoGeneratorTool({ aiProvider, setAiProvider, tier, rec
 
                     {/* Icon area */}
                     <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
-                      {!r.iconLoaded && (
+                      {!r.iconLoaded && !imgErrors[i] && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-gray-100 dark:bg-gray-800">
                           <RefreshCw size={18} className="animate-spin text-violet-400"/>
                           <p className="text-[10px] text-gray-400">Rendering icon…</p>
                         </div>
                       )}
-                      <img
-                        src={r.iconUrl}
-                        alt={`Logo icon ${i+1}`}
-                        onLoad={() => markLoaded(i as 0|1)}
-                        onError={() => markLoaded(i as 0|1)}
-                        className={`w-full h-full object-contain rounded-2xl transition-opacity duration-500 ${r.iconLoaded ? "opacity-100" : "opacity-0"}`}
-                        style={{ background: "white" }}
-                      />
+                      {imgErrors[i] ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-red-50 dark:bg-red-950/30 p-2 text-center">
+                          <ImageIcon className="h-6 w-6 text-red-400 mx-auto" />
+                          <p className="text-[10px] font-semibold text-red-500">Failed to load</p>
+                          <button
+                            onClick={e => { e.stopPropagation(); regenerateOne(i as 0|1); }}
+                            className="mt-1 rounded bg-red-500 hover:bg-red-600 px-2 py-0.5 text-[9px] font-bold text-white transition-colors"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : (
+                        <img
+                          src={r.iconUrl}
+                          alt={`Logo icon ${i+1}`}
+                          onLoad={() => markLoaded(i as 0|1)}
+                          onError={() => {
+                            setImgErrors(prev => {
+                              const next = [...prev] as [boolean, boolean];
+                              next[i] = true;
+                              return next;
+                            });
+                          }}
+                          className={`w-full h-full object-contain rounded-2xl transition-opacity duration-500 ${r.iconLoaded ? "opacity-100" : "opacity-0"}`}
+                          style={{ background: "white" }}
+                        />
+                      )}
                     </div>
 
                     {/* Brand name — always perfectly spelled */}

@@ -508,6 +508,7 @@ export interface LogoConcept {
   initials: string;
   fontStyle: string;
   rationale: string;
+  iconPrompt: string;
 }
 
 export async function runLogoAI(
@@ -529,7 +530,8 @@ export async function runLogoAI(
     "shape": "rounded|circle|shield|hexagon|diamond",
     "initials": "1-2 capital letters",
     "fontStyle": "font descriptor e.g. bold geometric sans",
-    "rationale": "one sentence design logic"
+    "rationale": "one sentence design logic",
+    "iconPrompt": "highly detailed description of a flat vector icon/symbol representing the brand name and industry (e.g. 'viking helmet with crossed axes' or 'stylized camera lens with a viking horn') on a pure white background. NO text."
   },
   "conceptB": { same fields, contrasting design }
 }
@@ -607,7 +609,7 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
     if (ok) return await callLogo(ok, false);
     // Free fallback
     return await callLogoPollinations();
-  } catch (err) {
+    } catch (err) {
     console.warn("Paid Logo API failed, falling back to Pollinations:", err);
     try {
       return await callLogoPollinations();
@@ -616,8 +618,8 @@ Match colors to the brand vibe (dark+neon for gaming, warm+earthy for food, clea
       const name = prompt.slice(0, 18).trim() || "Brand";
       const ini = name.slice(0, 2).toUpperCase();
       return [
-        { id: 1, name, tagline: "Built for creators", style: "Modern Gradient", primaryColor: "#7C3AED", secondaryColor: "#06B6D4", bg: "linear-gradient(135deg,#7C3AED,#06B6D4)", shape: "rounded", initials: ini, fontStyle: "font-black tracking-tight", rationale: "Vibrant gradient communicates innovation." },
-        { id: 2, name, tagline: "Stand out. Scale up.", style: "Bold Minimal", primaryColor: "#0F172A", secondaryColor: "#F59E0B", bg: "linear-gradient(135deg,#0F172A,#1E293B)", shape: "circle", initials: ini, fontStyle: "font-extrabold tracking-widest", rationale: "Dark base with amber accent signals authority." },
+        { id: 1, name, tagline: "Built for creators", style: "Modern Gradient", primaryColor: "#7C3AED", secondaryColor: "#06B6D4", bg: "linear-gradient(135deg,#7C3AED,#06B6D4)", shape: "rounded", initials: ini, fontStyle: "font-black tracking-tight", rationale: "Vibrant gradient communicates innovation.", iconPrompt: "stylized camera lens with geometric starburst" },
+        { id: 2, name, tagline: "Stand out. Scale up.", style: "Bold Minimal", primaryColor: "#0F172A", secondaryColor: "#F59E0B", bg: "linear-gradient(135deg,#0F172A,#1E293B)", shape: "circle", initials: ini, fontStyle: "font-extrabold tracking-widest", rationale: "Dark base with amber accent signals authority.", iconPrompt: "bold geometric arrow pointing up and right" },
       ];
     }
   }
@@ -633,7 +635,8 @@ export function generateLogoImage(
   primaryColor: string,
   secondaryColor: string,
   shape: string,
-  seed?: number
+  seed?: number,
+  iconPrompt?: string
 ): string {
   const styleMap: Record<string, string> = {
     "Modern": "modern clean geometric vector icon",
@@ -676,12 +679,12 @@ export function generateLogoImage(
 
   const styleDesc = styleMap[style] ?? "modern clean vector icon";
   const shapeDesc = shapeMap[shape] ?? "inside a rounded shape";
-  const iconHint = industryIconMap[industry] ?? "abstract geometric symbol";
+  const iconHint = iconPrompt || (industryIconMap[industry] ?? "abstract geometric symbol");
 
   const prompt = [
     `${styleDesc} logo mark symbol`,
     `${shapeDesc}`,
-    `inspired by ${iconHint}`,
+    `representing: ${iconHint}`,
     `primary color ${primaryColor} secondary color ${secondaryColor}`,
     `pure white background`,
     `NO letters NO text NO words NO typography`,
@@ -693,7 +696,7 @@ export function generateLogoImage(
 
   const encoded = encodeURIComponent(prompt);
   const s = seed ?? Math.floor(Math.random() * 999999);
-  return `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&seed=${s}&nologo=true&model=flux&enhance=true`;
+  return `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&seed=${s}&nologo=true&model=flux`;
 }
 
 // ─── Image Generation via Pollinations (free, no key needed) ─────────────────
